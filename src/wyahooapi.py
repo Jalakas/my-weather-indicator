@@ -144,12 +144,12 @@ class YahooWeatherService(WeatherService):
             weather_data['update_time'] = time.time()
             weather_data['ok'] = True
             data = ans['query']['results']['channel']
-            temperature = cf.f2c_print(data['item']['condition']['temp'])
-            velocity = cf.f2c_print(data['wind']['speed'])
-            direction = cf.f2c_print(data['wind']['direction'])
-            pressure = cf.f2c_print(data['atmosphere']['pressure'])
-            visibility = cf.f2c_print(data['atmosphere']['visibility'])
-            humidity = cf.f2c_print(data['atmosphere']['humidity'])
+            temperature = cf.s2f_print(data['item']['condition']['temp'])
+            velocity = cf.s2f_print(data['wind']['speed'])
+            direction = cf.s2f_print(data['wind']['direction'])
+            pressure = cf.s2f_print(data['atmosphere']['pressure'])
+            visibility = cf.s2f_print(data['atmosphere']['visibility'])
+            humidity = cf.s2f_print(data['atmosphere']['humidity'])
             condition = CODE[int(data['item']['condition']['code'])]
             weather_data['current_conditions']['condition'] = condition
             weather_data['current_conditions']['condition_text'] =\
@@ -205,8 +205,8 @@ class YahooWeatherService(WeatherService):
             weather_data['current_conditions']['precip_today'] = None
             for i, forecast_condition in enumerate(data['item']['forecast']):
                 if i < 7:
-                    tlow = cf.f2c_print(forecast_condition['low'])
-                    thight = cf.f2c_print(forecast_condition['high'])
+                    tlow = cf.s2f_print(forecast_condition['low'])
+                    thight = cf.s2f_print(forecast_condition['high'])
                     weather_data['forecasts'][i]['low'] =\
                         cf.change_temperature(tlow, self.units.temperature)
                     weather_data['forecasts'][i]['high'] =\
