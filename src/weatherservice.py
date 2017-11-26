@@ -535,7 +535,7 @@ def get_humidity(text):
     return ''
 
 
-def is_day_now(sunrise, sunset, rawOffset):
+def is_day_now(sunrise, sunset, rawOffset=0):
     now = datetime.time(datetime.utcnow() + timedelta(hours=rawOffset))
     hora = ('%s:%s') % (now.hour, now.minute)
     if time_is_lower(sunset, sunrise):
