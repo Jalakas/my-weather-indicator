@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
+
 
 def redondea(valor):
     valor = valor * 10.0
@@ -66,6 +68,19 @@ def change_temperature(valor, a):
     elif a == 'K':
         valor = 5.0 / 9.0 * (valor - 32.0) + 273.15
     return str(redondea_digits(valor))
+
+
+def change_temperature2(valor, a):
+    valor = s2f(valor)
+    # initial a in ºF
+    if a == 'C':
+        valor = 5.0 / 9.0 * (valor - 32.0)
+    elif a == 'K':
+        valor = 5.0 / 9.0 * (valor - 32.0) + 273.15
+        return '{0} {1}'.format(redondea_digits(valor), a)
+    if sys.version_info[0] == 3:
+        return '{0} {1:c}{2}'.format(redondea_digits(valor), 176, a)
+    return str(redondea_digits(valor)) + chr(176)
 
 
 def fa2f(temperature):
