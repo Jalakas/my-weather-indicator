@@ -106,7 +106,7 @@ class YahooWeatherService(WeatherService):
             Bug #1568774
             '''
             print('wyahooapi.py: Bug #1568774', str(e))
-            print('wyahooapi.py: Unable to query https url, switch to http url')
+            print('wyahooapi.py: Unable to query https url, switching to http url')
             url = 'http://query.yahooapis.com/v1/yql?q=%s' % q
             ans = requests.get(url, auth=self.oauth, params=params)
 
