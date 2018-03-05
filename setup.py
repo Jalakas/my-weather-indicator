@@ -96,6 +96,75 @@ LICENSE = 'GNU General Public License (GPL)'
 COMPILED_LANGUAGE_FILE = '%s.mo' % APP
 
 
+def babilon():
+    print('############################################################')
+    print('Parent dir -> %s' % MAIN_DIR)
+    print('Languages dir -> %s' % LANGUAGES_DIR)
+    print('Source dir -> %s' % SRC_DIR)
+    print('############################################################')
+    print('Updating Desktop File First Part')
+    print('############################################################')
+    update_desktop_file_fp()
+    print('############################################################')
+    print('Updating template')
+    print('############################################################')
+    files_file = list_src()
+    command = 'xgettext --msgid-bugs-address=%s --language=Python\
+    --keyword=_ --keyword=N_ --sort-by-file --output=%s --files-from=%s'\
+    % (AUTHOR_EMAIL, TEMPLATE, files_file)
+    print(execute(command))
+    print('Clean filepaths from template')
+    print('############################################################')
+    with fileinput.FileInput(TEMPLATE, inplace=True, backup='.bak') as file:
+        for line in file:
+            print(line.replace("#: " + MAIN_DIR, "#: .."))
+    print('############################################################')
+    delete_it(files_file)
+    print('############################################################')
+    print('List languages')
+    print('############################################################')
+    list_languages()
+    print('############################################################')
+    print('Updating translations')
+    print('############################################################')
+    update_translations()
+    print('############################################################')
+    print('Updating Desktop File')
+    print('############################################################')
+    update_desktop_file()
+    print('############################################################')
+    print('Removing security copies')
+    print('############################################################')
+    remove_security_copies()
+
+
+def delete_it(file):
+    if os.path.exists(file):
+        if os.path.isdir(file):
+            shutil.rmtree(file)
+        else:
+            os.remove(file)
+
+
+def edit_language_file(file):
+    po = polib.pofile(file)
+    lang = file.split('/')[-1:][0].split('.')[0]
+    po.metadata['Project-Id-Version'] = '%s %s' % (APP, VERSION)
+    po.metadata['Report-Msgid-Bugs-To'] = AUTHOR_EMAIL
+    po.metadata['Language'] = lang
+    po.metadata['Content-Type'] = 'text/plain; charset=UTF-8'
+    po.metadata['Content-Transfer-Encoding'] = '8bit'
+    po.save()
+
+
+def execute(command):
+    print('Running... %s' % command)
+    args = shlex.split(command)
+    p = subprocess.Popen(args, bufsize=10000, stdout=subprocess.PIPE)
+    valor = p.communicate()[0]
+    return valor
+
+
 def get_entry(filein, msgid):
     try:
         po = polib.pofile(filein)
@@ -106,25 +175,6 @@ def get_entry(filein, msgid):
     except Exception as e:
         print(filein, e)
     return None
-
-
-def ejecuta(comando):
-    print('Running... %s' % comando)
-    args = shlex.split(comando)
-    p = subprocess.Popen(args, bufsize=10000, stdout=subprocess.PIPE)
-    valor = p.communicate()[0]
-    return valor
-
-
-def list_src():
-    file_txt = os.path.join(MAIN_DIR, 'files.txt')
-    f = open(file_txt, 'w')
-    for file in glob.glob(os.path.join(SRC_DIR, '*.py')):
-        f.write('%s\n' % file)
-    for file in glob.glob(os.path.join(MAIN_DIR, '*.desktop.in')):
-        f.write('%s\n' % file)
-    f.close()
-    return file_txt
 
 
 def list_languages():
@@ -148,6 +198,50 @@ def list_languages():
     return file_txt
 
 
+def list_src():
+    file_txt = os.path.join(MAIN_DIR, 'files.txt')
+    f = open(file_txt, 'w')
+    for file in glob.glob(os.path.join(SRC_DIR, '*.py')):
+        f.write('%s\n' % file)
+    for file in glob.glob(os.path.join(MAIN_DIR, '*.desktop.in')):
+        f.write('%s\n' % file)
+    f.close()
+    return file_txt
+
+
+def remove_compiled_files(dir):
+    cachedir = os.path.join(dir, '__pycache__')
+    if os.path.exists(cachedir):
+        shutil.rmtree(cachedir)
+    remove_files(dir, '.pyc')
+
+
+def remove_files(dir, ext):
+    files = []
+    for file in glob.glob(os.path.join(dir, '*')):
+        if file is not None and os.path.exists(file):
+            if file and os.path.isdir(file):
+                morefiles = remove_files(file, ext)
+                if morefiles:
+                    files.extend(morefiles)
+            else:
+                files.append(file)
+    for file in files:
+        if os.path.splitext(file)[1] == ext:
+            os.remove(file)
+
+
+def remove_languages_saved_files(dir):
+    remove_files(dir, '.po~')
+
+
+def remove_security_copies():
+    for file in glob.glob(os.path.join(LANGUAGES_DIR, '*.po~')):
+        os.remove(file)
+    for file in glob.glob(os.path.join(LANGUAGES_DIR, '*.pot.bak')):
+        os.remove(file)
+
+
 def update_translations():
     file_txt = os.path.join(LANGUAGES_DIR, 'languages.txt')
     f = open(file_txt, 'r')
@@ -162,20 +256,9 @@ def update_translations():
         else:
             command = 'msginit --output-file=%s --input=%s --locale=%s' % (
                 file, TEMPLATE, lan)
-        print(ejecuta(command))
+        print(execute(command))
         edit_language_file(file)
     f.close()
-
-
-def edit_language_file(file):
-    po = polib.pofile(file)
-    lang = file.split('/')[-1:][0].split('.')[0]
-    po.metadata['Project-Id-Version'] = '%s %s' % (APP, VERSION)
-    po.metadata['Report-Msgid-Bugs-To'] = AUTHOR_EMAIL
-    po.metadata['Language'] = lang
-    po.metadata['Content-Type'] = 'text/plain; charset=UTF-8'
-    po.metadata['Content-Transfer-Encoding'] = '8bit'
-    po.save()
 
 
 def update_desktop_file_fp():
@@ -246,112 +329,12 @@ def update_desktop_file():
         fileout.close()
 
 
-def remove_security_copies():
-    for file in glob.glob(os.path.join(LANGUAGES_DIR, '*.po~')):
-        os.remove(file)
-    for file in glob.glob(os.path.join(LANGUAGES_DIR, '*.pot.bak')):
-        os.remove(file)
-
-
-def delete_it(file):
-    if os.path.exists(file):
-        if os.path.isdir(file):
-            shutil.rmtree(file)
-        else:
-            os.remove(file)
-
-
-def remove_files(dir, ext):
-    files = []
-    for file in glob.glob(os.path.join(dir, '*')):
-        if file is not None and os.path.exists(file):
-            if file and os.path.isdir(file):
-                morefiles = remove_files(file, ext)
-                if morefiles:
-                    files.extend(morefiles)
-            else:
-                files.append(file)
-    for file in files:
-        if os.path.splitext(file)[1] == ext:
-            os.remove(file)
-
-
-def remove_compiled_files(dir):
-    cachedir = os.path.join(dir, '__pycache__')
-    if os.path.exists(cachedir):
-        shutil.rmtree(cachedir)
-    remove_files(dir, '.pyc')
-
-
-def remove_languages_saved_files(dir):
-    remove_files(dir, '.po~')
-
-
-def babilon():
-    print('############################################################')
-    print('Parent dir -> %s' % MAIN_DIR)
-    print('Languages dir -> %s' % LANGUAGES_DIR)
-    print('Source dir -> %s' % SRC_DIR)
-    print('############################################################')
-    print('Updating Desktop File First Part')
-    print('############################################################')
-    update_desktop_file_fp()
-    print('############################################################')
-    print('Updating template')
-    print('############################################################')
-    files_file = list_src()
-    command = 'xgettext --msgid-bugs-address=%s --language=Python\
-    --keyword=_ --keyword=N_ --sort-by-file --output=%s --files-from=%s'\
-    % (AUTHOR_EMAIL, TEMPLATE, files_file)
-    print(ejecuta(command))
-    print('Cleaning filepath in teplate')
-    print('############################################################')
-    with fileinput.FileInput(TEMPLATE, inplace=True, backup='.bak') as file:
-        for line in file:
-            print(line.replace("#: " + MAIN_DIR, "#: .."))
-    print('############################################################')
-    delete_it(files_file)
-    print('############################################################')
-    print('List languages')
-    print('############################################################')
-    #
-    list_languages()
-    #
-    print('############################################################')
-    print('Updating translations')
-    print('############################################################')
-    update_translations()
-    print('############################################################')
-    print('Updating Desktop File')
-    print('############################################################')
-    update_desktop_file()
-    print('############################################################')
-    print('Removing security copies')
-    print('############################################################')
-    remove_security_copies()
-
-
-class clean_and_compile(cmd.Command):
-    description = 'Clean and compile languages'
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
-        remove_compiled_files(SRC_DIR)
-        babilon()
-
-
-class translate(build_extra.build_extra):
-    sub_commands = build_extra.build_extra.sub_commands + [(
-        'clean_and_compile', None)]
+class build(build_extra.build_extra):
+    sub_commands = build_extra.build_extra.sub_commands +\
+        [('build_trans', None)]
 
     def run(self):
         build_extra.build_extra.run(self)
-        pass
 
 
 class build_trans(cmd.Command):
@@ -388,12 +371,18 @@ class build_trans(cmd.Command):
                             subprocess.call(msgfmt_cmd, shell=True)
 
 
-class build(build_extra.build_extra):
-    sub_commands = build_extra.build_extra.sub_commands + [('build_trans',
-                                                            None)]
+class clean_and_compile(cmd.Command):
+    description = 'Clean and compile languages'
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
 
     def run(self):
-        build_extra.build_extra.run(self)
+        remove_compiled_files(SRC_DIR)
+        babilon()
 
 
 class install_data(_install_data):
@@ -409,6 +398,15 @@ class install_data(_install_data):
         _install_data.run(self)
 
 
+class translate(build_extra.build_extra):
+    sub_commands = build_extra.build_extra.sub_commands + [(
+        'clean_and_compile', None)]
+
+    def run(self):
+        build_extra.build_extra.run(self)
+        pass
+
+
 setup(name=APP,
       version=VERSION,
       author=AUTHOR,
@@ -417,9 +415,9 @@ setup(name=APP,
       license=LICENSE,
       data_files=DATA_FILES,
       cmdclass={'build': build,
-                'translate': translate,
-                'clean_and_compile': clean_and_compile,
                 'build_trans': build_trans,
-                'install_data': install_data
+                'clean_and_compile': clean_and_compile,
+                'install_data': install_data,
+                'translate': translate,
                 },
       )
