@@ -398,7 +398,7 @@ class install_data(_install_data):
         _install_data.run(self)
 
 
-class translate(build_extra.build_extra):
+class update_translations(build_extra.build_extra):
     sub_commands = build_extra.build_extra.sub_commands + [(
         'clean_and_compile', None)]
 
@@ -418,6 +418,6 @@ setup(name=APP,
                 'build_trans': build_trans,
                 'clean_and_compile': clean_and_compile,
                 'install_data': install_data,
-                'translate': translate,
+                'update_translations': update_translations,
                 },
       )
